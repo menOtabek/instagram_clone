@@ -15,7 +15,7 @@ class PostListApiView(generics.ListAPIView):
         return Post.objects.all()
 
 
-class CreatePostApiView(generics.CreateAPIView):
+class PostCreateApiView(generics.CreateAPIView):
     permission_classes = [IsAuthenticated, ]
     serializer_class = PostSerializer
 
@@ -52,3 +52,25 @@ class PostRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
                 'message': 'Post successfully deleted',
             }, status=status.HTTP_204_NO_CONTENT
         )
+
+
+class PostCommentListApiView(generics.ListAPIView):
+    permission_classes = [AllowAny, ]
+    serializer_class = CommentSerializer
+    pagination_class = CustomPagination
+
+    def get_queryset(self):
+        post_id = self.kwargs['pk']
+        queryset = PostComment.objects.filter(post__id=post_id)
+        return queryset
+
+
+class PostCommentCreateApiView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = CommentSerializer
+
+    def perform_create(self, serializer):
+        post_id = self.kwargs['pk']
+        serializer.save(author=self.request.user, post_id=post_id)
+
+
