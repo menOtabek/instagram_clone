@@ -23,8 +23,6 @@ class PostSerializer(serializers.ModelSerializer):
         fields = (
             'id', 'author', 'caption', 'image', 'post_likes_count', 'post_comments_count', 'created_at', 'me_liked',)
 
-
-class PostLikeSerializer(serializers.ModelSerializer):
     @staticmethod
     def get_post_comments_count(obj):
         return obj.comments.count()
