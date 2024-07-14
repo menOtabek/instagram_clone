@@ -1,5 +1,6 @@
-from rest_framework import generics
-from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework import generics, status
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from .models import Post, PostLike, PostComment, CommentLike
 from .serializers import PostSerializer, PostLikeSerializer, CommentSerializer, CommentLikeSerializer
 from shared.custom_pagination import CustomPagination
@@ -13,3 +14,41 @@ class PostListApiView(generics.ListAPIView):
     def get_queryset(self):
         return Post.objects.all()
 
+
+class CreatePostApiView(generics.CreateAPIView):
+    permission_classes = [IsAuthenticated, ]
+    serializer_class = PostSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class PostRetrieveUpdateDestroyApiView(generics.RetrieveUpdateDestroyAPIView):
+    permission_classes = [IsAuthenticatedOrReadOnly, ]
+    serializer_class = PostSerializer
+    queryset = Post.objects.all()
+
+    def put(self, request, *args, **kwargs):
+        post = self.get_object()
+        serializer = self.serializer_class(post, data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(
+            {
+                'success': True,
+                'data': serializer.data,
+                'message': 'Post successfully updated',
+            }, status=status.HTTP_200_OK
+        )
+
+    def delete(self, request, *args, **kwargs):
+        post = self.get_object()
+        post.delete()
+        return Response(
+            {
+                'success': True,
+                'message': 'Post successfully deleted',
+            }, status=status.HTTP_204_NO_CONTENT
+        )

@@ -22,6 +22,9 @@ class PostSerializer(serializers.ModelSerializer):
         model = Post
         fields = (
             'id', 'author', 'caption', 'image', 'post_likes_count', 'post_comments_count', 'created_at', 'me_liked',)
+        extra_kwargs = {
+            'image': {'required': False},
+        }
 
     @staticmethod
     def get_post_comments_count(obj):
@@ -35,9 +38,9 @@ class PostSerializer(serializers.ModelSerializer):
         request = self.context.get('request')
         if request and request.user.is_authenticated:
             try:
-                PostLike.objects.get(user=request.user, post=obj)
+                PostLike.objects.get(author=request.user, post=obj)
                 return True
-            except not PostLike:
+            except PostLike.DoesNotExist:
                 return False
         return False
 
